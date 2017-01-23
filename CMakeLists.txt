@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.7)
+Project(CrispCollisionDetector)
+
+# Eigen Time sucka's
+FIND_PACKAGE(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+FIND_PACKAGE(ITK)
+IF(ITK_FOUND)
+	INCLUDE(${ITK_USE_FILE})
+ENDIF(ITK_FOUND)
+
+FIND_PACKAGE(VTK)
+IF(VTK_FOUND)
+	INCLUDE(${VTK_USE_FILE})
+ENDIF(VTK_FOUND)
+
+INCLUDE_DIRECTORIES(${CrispCollisionDetector_SOURCE_DIR})
+ADD_EXECUTABLE(Tests Tests.cxx CrispCollisionDetector.cxx)
+
+TARGET_LINK_LIBRARIES(Tests
+	${VTK_LIBRARIES} ${ITK_LIBRARIES}
+	)
