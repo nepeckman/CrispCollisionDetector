@@ -1,5 +1,6 @@
 #include "CrispCollisionDetector.h"
 #include "CollisionDetection.h"
+#include "ItkTypes.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -16,7 +17,7 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 	// create name generator
 	std::cout << "Creating name generator" << std::endl;
 	NamesGeneratorType::Pointer nameGenerator = NamesGeneratorType::New();
-	nameGenerator->SetDirectory(argv[1]);
+	nameGenerator->SetDirectory("../../PEL");
 
 	// create dicom reader
 	std::cout << "Creating dicom reader" << std::endl;
@@ -37,161 +38,33 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 
 	// read image data
 	std::cout << "Reading image data" << std::endl;
-	Image3DType::Pointer image = reader->GetOutput();
+	image = reader->GetOutput();
 	Image3DType::RegionType region = image->GetLargestPossibleRegion();
 	size = region.GetSize();
 
-	// create threshold filter
-	std::cout << "Creating threshold filter" << std::endl;
-	int maxIntensity, minIntensity;
-	if(argc < 5)
-	{
-		minIntensity = 0;
-		maxIntensity = 65536;
-	} else
-	{
-		minIntensity = std::stoi(argv[3]);
-		maxIntensity = std::stoi(argv[4]);
-	}
-	std::cout << "Threshold below \"" << minIntensity << "\"" << std::endl;
-	std::cout << "Threshold above \"" << maxIntensity << "\"" << std::endl;
-	ThresholdImageFilterType::Pointer thresholdFilter = ThresholdImageFilterType::New();
-	thresholdFilter->ThresholdOutside(minIntensity, maxIntensity);
-	thresholdFilter->SetOutsideValue(0);
-	thresholdFilter->SetInput(reader->GetOutput());
-	thresholdFilter->Update();
-
-	segmentedImage = thresholdFilter->GetOutput();
-
-	//  make graph
-	//  intialize nodes
-
-	std::cout << "Initializing graph nodes" << std::endl;
-	Node *tail = nullptr;
-	Node *current = nullptr;
-	Node *head = nullptr;
-
+	// invert image, space becomes filled, volume becomes empty
+	// Issue: too much filling, bad if something outside the body moves and this thinks its inside
 	for(int i = 0; i < size[0]; i++)
 	{
 		for(int j = 0; j < size[1]; j++)
 		{
 			for(int k = 0; k < size[2]; k++)
 			{
-				Image3DType::IndexType *index = new Image3DType::IndexType;
-				(*index)[0] = i;
-				(*index)[1] = j;
-				(*index)[2] = k;
-				Image3DType::PixelType pixelValue = segmentedImage->GetPixel(*index);
+				Image3DType::IndexType index;
+				index[0] = i;
+				index[1] = j;
+				index[2] = k;
+				Image3DType::PixelType pixelValue = image->GetPixel(index);
 				if(pixelValue > 0)
 				{
-					tail = new Node;
-					nodeVector.push_back(tail);
-					tail->index = index;
-					tail->previous = current;
-					tail->next = nullptr;
-					tail->processed = 0;
-					if(!head)
-					{
-						head = tail;
-						current = tail;
-					} else
-					{
-						current->next = tail;
-					}
-					current = tail;
+					image->SetPixel(index, 0);
 				} else
 				{
-					nodeVector.push_back(nullptr);
+					image->SetPixel(index, 10000);
 				}
 			}
 		}
 	}
-
-	// connect nodes
-	std::cout << "Connecting graph nodes" << std::endl;
-	current = head;
-	while(current)
-	{
-		Image3DType::IndexType currentIndex = *(current->index);
-		for(int i = currentIndex[0] - 1; i < currentIndex[0] + 2; i++)
-		{
-			for(int j = currentIndex[1] - 1; j < currentIndex[1] + 2; j++)
-			{
-				for(int k = currentIndex[2] - 1; k < currentIndex[2] + 2; k++)
-				{
-					if( i > -1 && j > -1 && k > -1)
-					{
-						Image3DType::IndexType* adjacentIndex = new Image3DType::IndexType;
-						(*adjacentIndex)[0] = i;
-						(*adjacentIndex)[1] = j;
-						(*adjacentIndex)[2] = k;
-						Node* adjacentNode = nodeVector[findIndex(size, *adjacentIndex)];
-						if( (currentIndex[0] != i || currentIndex[1] != j || currentIndex[2] != k) &&
-						(adjacentNode != nullptr))
-						{
-							Link *link = new Link;
-							link->from = current;
-							link->to = adjacentNode;
-							link->next = current->links;
-							current->links = link;
-						}
-						delete adjacentIndex;
-					}
-				}
-			}
-		}
-		current = current->next;
-	}
-
-	std::cout << "Finding connected objects" << std::endl;
-	ObjectVectorType objects;
-	for(std::vector< Node*>::size_type i = 0; i != nodeVector.size(); i++)
-	{
-		Node* nCurrent = nodeVector[i];
-		if(nCurrent != nullptr && !nCurrent->processed)
-		{
-			std::unordered_set< Node* >* object = new std::unordered_set< Node*>;
-			objects.push_back(object);
-			std::queue< Node*> queue;
-			queue.push(nCurrent);
-			object->insert(nCurrent);
-			nCurrent->processed = 1;
-			while(!queue.empty())
-			{
-				Node* current = queue.front();
-				queue.pop();
-				Link* lCurrent = current->links;
-				while(lCurrent)
-				{
-					Node* node = lCurrent->to;
-					if(!node->processed)
-					{
-						queue.push(node);
-						object->insert(node);
-						node->processed = 1;
-					}
-					lCurrent = lCurrent->next;
-				}
-			}
-		}
-	}
-
-	std::cout << "Cleaning small objects" << std::endl;
-	for(ObjectVectorType::size_type i = 0; i != objects.size(); i++)
-	{
-		std::unordered_set< Node* > object = *objects[i];
-		if(object.size() > 500000 || object.size() < 100000)
-		{
-			for(std::unordered_set< Node*>::iterator it = object.begin(); it != object.end(); ++it)
-			{
-				Node* n = *(it);
-				Image3DType::IndexType itIndex = *(n->index);
-				nodeVector[findIndex(size, itIndex)] = nullptr;
-				segmentedImage->SetPixel(itIndex, 0);
-			}
-		}
-	}
-
 	// make output directory
 	std::string writedir;
 		if(argc < 2)
@@ -217,7 +90,7 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 		reader->Update();
 
 		SeriesWriterType::Pointer seriesWriter = SeriesWriterType::New();
-		seriesWriter->SetInput(segmentedImage);
+		seriesWriter->SetInput(image);
 		seriesWriter->SetImageIO(dicomIO);
 		seriesWriter->SetFileNames(outputNames->GetFileNames());
 		seriesWriter->SetMetaDataDictionaryArray(reader->GetMetaDataDictionaryArray());
@@ -342,8 +215,10 @@ Eigen::Vector3d CrispCollisionDetector::highestPoint(Cube* cube) const
 bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & point1s,
 								 const std::vector<Eigen::Vector3d> & point2s,
 								 const std::vector<double> & radii,
-								 std::vector<int> & indices) const
+								 std::vector<int> & indices,
+							 	 std::vector<Image3DType::IndexType*> & pixels) const
 {
+		bool rv = false;
 		for(std::vector< Eigen::Vector3d >::size_type i = 0; i != point1s.size(); i++)
 		{
 			Cylinder* cylinder = new Cylinder;
@@ -370,9 +245,15 @@ bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & po
 						point(0) = x;
 						point(1) = y;
 						point(2) = z;
-						if(ptIsInCylinder(point, cylinder) && nodeVector[findIndex(size, x, y, z)])
+						Image3DType::IndexType *pixel = new Image3DType::IndexType;
+						(*pixel)[0] = x;
+						(*pixel)[1] = y;
+						(*pixel)[2] = z;
+						if(ptIsInCylinder(point, cylinder) && (image->GetPixel(*pixel) > 0))
 						{
-							return true;
+							rv = true;
+							indices.push_back(i);
+							pixels.push_back(pixel);
 						}
 					}
 				}
@@ -383,7 +264,9 @@ bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & po
 		return false;
 }
 
-std::vector< Node* > CrispCollisionDetector::getGraph()
+void remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
+								 const std::vector<Eigen::Vector3d> & point2s,
+								 const std::vector<double> & radii)
 {
-	return nodeVector;
+
 }

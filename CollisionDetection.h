@@ -2,13 +2,15 @@
 #define COLLISION_DETECTION_H
 #include </usr/local/Cellar/eigen/3.3.0/include/eigen3/Eigen/Dense>
 #include <vector>
+#include "ItkTypes.h"
 
 class CollisionDetection{
  public:
   virtual bool inCollision(const std::vector<Eigen::Vector3d> & point1s,
 			   const std::vector<Eigen::Vector3d> & point2s,
 			   const std::vector<double> & radii,
-			   std::vector<int> & indices) const = 0;
+			   std::vector<int> & indices,
+         std::vector<Image3DType::IndexType*> & pixels) const = 0;
 
   //point1s.size() # of cylinders
 

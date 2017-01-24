@@ -2,28 +2,10 @@
 #define CRISP_COLLISION_DETECTOR_H
 #include <Eigen/Dense>
 #include <unordered_set>
-#include "itkImage.h"
-#include "itkGDCMImageIO.h"
-#include "itkGDCMSeriesFileNames.h"
-#include "itkImageSeriesReader.h"
-#include "itkThresholdImageFilter.h"
-#include "itkImageFileWriter.h"
-#include <itksys/SystemTools.hxx>
-#include "itkNumericSeriesFileNames.h"
-#include "itkImageSeriesWriter.h"
-#include "itkExceptionObject.h"
 #include "CollisionDetection.h"
+#include "ItkTypes.h"
 
-typedef itk::Image<float, 2> Image2DType;
-typedef itk::Image<float, 3> Image3DType;
-typedef itk::ImageSeriesReader<Image3DType> ReaderType;
-typedef itk::GDCMImageIO ImageIOType;
-typedef itk::GDCMSeriesFileNames NamesGeneratorType;
-typedef std::vector<std::string> SeriesIDContainer;
-typedef std::vector<std::string> FileNamesContainer;
-typedef itk::ThresholdImageFilter<Image3DType> ThresholdImageFilterType;
-typedef itk::NumericSeriesFileNames OutputNamesGeneratorType;
-typedef itk::ImageSeriesWriter<Image3DType, Image2DType> SeriesWriterType;
+
 
 struct Link;
 struct Node{
@@ -59,15 +41,18 @@ typedef std::vector< std::unordered_set< Node* >* > ObjectVectorType;
 
 class CrispCollisionDetector : public CollisionDetection {
 public:
-	Image3DType* segmentedImage;
-	std::vector< Node* > nodeVector;
+	Image3DType* image;
 	ReaderType::Pointer reader;
 	ImageIOType::Pointer dicomIO;
 	Image3DType::SizeType size;
 	bool inCollision(const std::vector<Eigen::Vector3d> & point1s,
 			   					 const std::vector<Eigen::Vector3d> & point2s,
 			   			 		 const std::vector<double> & radii,
-			   			 		 std::vector<int> & indices) const;
+			   			 		 std::vector<int> & indices,
+								 	 std::vector<Image3DType::IndexType*> & pixels) const;
+	void remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
+															const std::vector<Eigen::Vector3d> & point2s,
+															const std::vector<double> & radii);
 	CrispCollisionDetector(int argc, char** argv);
 
 	bool ptIsInCylinder(const Eigen::Vector3d &pt, Cylinder* cylinder) const;

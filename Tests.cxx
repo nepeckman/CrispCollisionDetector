@@ -10,5 +10,6 @@
 
 int main(int argc, char** argv)
 {
+  CrispCollisionDetector detector(argc, argv);
   return 0;
 }
