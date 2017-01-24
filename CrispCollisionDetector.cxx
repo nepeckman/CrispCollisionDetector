@@ -264,9 +264,16 @@ bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & po
 		return false;
 }
 
-void remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
+void CrispCollisionDetector::remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
 								 const std::vector<Eigen::Vector3d> & point2s,
 								 const std::vector<double> & radii)
 {
-
+	std::vector<int> indices;
+	std::vector<Image3DType::IndexType*> pixels;
+	inCollision(point1s, point2s, radii, indices, pixels);
+	for(std::vector<Image3DType::IndexType*>::size_type i = 0; i != pixels.size(); i++)
+	{
+		image->SetPixel(*pixels[i], 0);
+	}
+	return;
 }
