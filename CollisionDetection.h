@@ -8,7 +8,7 @@ class CollisionDetection{
  public:
   virtual bool inCollision(const std::vector<Eigen::Vector3d> & point1s,
 			   const std::vector<Eigen::Vector3d> & point2s,
-			   const std::vector<double> & radii,
+			   const std::vector<float> & radii,
 			   std::vector<int> & indices,
          std::vector<Image3DType::IndexType*> & pixels) const = 0;
 
@@ -18,13 +18,13 @@ class CollisionDetection{
 
   //Eigen::Vector3d pt = point1s.at(0);
 
-  //double ptX = pt(0);
-  //double ptY = pt(1);
-  //double ptZ = pt(2);
+  //float ptX = pt(0);
+  //float ptY = pt(1);
+  //float ptZ = pt(2);
 
   virtual std::vector<Eigen::Vector3d> getInCollisionPoints(const std::vector<Eigen::Vector3d> & point1s,
 							    const std::vector<Eigen::Vector3d> & point2s,
-							    const std::vector<double> & radii) const {
+							    const std::vector<float> & radii) const {
     return std::vector<Eigen::Vector3d>();
   }
 };

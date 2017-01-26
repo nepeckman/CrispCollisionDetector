@@ -230,20 +230,20 @@ int CrispCollisionDetector::findIndex(Image3DType::SizeType size, int x, int y, 
 	return x * size[1] * size[2] + y * size[2] + z;
 }
 
-bool CrispCollisionDetector::distanceEqual(double d1, double d2) const
+bool CrispCollisionDetector::distanceEqual(float d1, float d2) const
 {
 	return std::abs(d1 - d2) < 0.01;
 }
 
-double CrispCollisionDetector::pointDistance(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2) const
+float CrispCollisionDetector::pointDistance(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2) const
 {
-	double diffx = std::abs(pt1(0) - pt2(0));
-	double diffy = std::abs(pt1(1) - pt2(1));
-	double diffz = std::abs(pt1(2) - pt2(2));
+	float diffx = std::abs(pt1(0) - pt2(0));
+	float diffy = std::abs(pt1(1) - pt2(1));
+	float diffz = std::abs(pt1(2) - pt2(2));
 	return std::sqrt(std::pow(diffx, 2) + std::pow(diffy, 2) + std::pow(diffz, 2));
 }
 
-double CrispCollisionDetector::magnitude(const Eigen::Vector3d &pt) const
+float CrispCollisionDetector::magnitude(const Eigen::Vector3d &pt) const
 {
 	return std::sqrt(std::pow(pt(0), 2) + std::pow(pt(1), 2) + std::pow(pt(2), 2));
 }
@@ -253,14 +253,14 @@ bool CrispCollisionDetector::pointIsOnSegment(const Eigen::Vector3d &pt, Line3D 
 	return distanceEqual(pointDistance(pt, line->pt1) + pointDistance(pt, line->pt2), pointDistance(line->pt1, line->pt2));
 }
 
-double CrispCollisionDetector::ptToLineDistance(const Eigen::Vector3d &pt, Line3D* line) const
+float CrispCollisionDetector::ptToLineDistance(const Eigen::Vector3d &pt, Line3D* line) const
 {
-	double numerator = magnitude((pt - line->pt1).cross(pt - line->pt2));
-	double denominator = magnitude(line->pt2 - line->pt1);
+	float numerator = magnitude((pt - line->pt1).cross(pt - line->pt2));
+	float denominator = magnitude(line->pt2 - line->pt1);
 	return numerator/denominator;
 }
 
-Eigen::Vector3d CrispCollisionDetector::moveAlongLine(Line3D* line, double distance) const
+Eigen::Vector3d CrispCollisionDetector::moveAlongLine(Line3D* line, float distance) const
 {
 	Eigen::Vector3d vector = line->pt2 - line->pt1;
 	Eigen::Vector3d movedVector = vector * distance/pointDistance(line->pt1, line->pt2);
@@ -269,8 +269,8 @@ Eigen::Vector3d CrispCollisionDetector::moveAlongLine(Line3D* line, double dista
 
 Eigen::Vector3d CrispCollisionDetector::ptOnLine(const Eigen::Vector3d &pt, Line3D* line) const
 {
-	double ptToSeg = ptToLineDistance(pt, line);
-	double linePtToIntersection = std::sqrt(std::pow(pointDistance(line->pt1, pt), 2) - std::pow(ptToSeg, 2));
+	float ptToSeg = ptToLineDistance(pt, line);
+	float linePtToIntersection = std::sqrt(std::pow(pointDistance(line->pt1, pt), 2) - std::pow(ptToSeg, 2));
 	return moveAlongLine(line, linePtToIntersection);
 }
 
@@ -286,17 +286,17 @@ bool CrispCollisionDetector::ptIsInCylinder(const Eigen::Vector3d &pt, Cylinder*
 	}
 }
 
-double CrispCollisionDetector::cylinderMaxDistance(Cylinder* cylinder) const
+float CrispCollisionDetector::cylinderMaxDistance(Cylinder* cylinder) const
 {
 	Eigen::Vector3d midpoint = (cylinder->line->pt1 + cylinder->line->pt2)/2;
-	double a = pointDistance(midpoint, cylinder->line->pt2);
-	double b = cylinder->radius;
+	float a = pointDistance(midpoint, cylinder->line->pt2);
+	float b = cylinder->radius;
 	return std::sqrt(std::pow(a, 2) + std::pow(b, 2));
 }
 
 Cube* CrispCollisionDetector::boundingCube(Cylinder* cylinder) const
 {
-	double halfSide = cylinderMaxDistance(cylinder);
+	float halfSide = cylinderMaxDistance(cylinder);
 	Eigen::Vector3d midpoint = (cylinder->line->pt1 + cylinder->line->pt2)/2;
 	Cube* box = new Cube;
 	box->halfSide = halfSide;
@@ -323,7 +323,7 @@ Eigen::Vector3d CrispCollisionDetector::highestPoint(Cube* cube) const
 
 bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & point1s,
 								 const std::vector<Eigen::Vector3d> & point2s,
-								 const std::vector<double> & radii,
+								 const std::vector<float> & radii,
 								 std::vector<int> & indices,
 							 	 std::vector<Image3DType::IndexType*> & pixels) const
 {
@@ -375,7 +375,7 @@ bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & po
 
 void CrispCollisionDetector::remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
 								 const std::vector<Eigen::Vector3d> & point2s,
-								 const std::vector<double> & radii)
+								 const std::vector<float> & radii)
 {
 	std::vector<int> indices;
 	std::vector<Image3DType::IndexType*> pixels;
