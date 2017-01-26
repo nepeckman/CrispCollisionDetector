@@ -11,7 +11,12 @@
 #include <cmath>
 #include <itksys/SystemTools.hxx>
 #include "itkExceptionObject.h"
+#include <limits>
 
+// By Thursday:
+// Switch doubles to floats
+// Remove configurable cube from starting points
+// Testing
 CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 {
 	// create name generator
@@ -42,8 +47,10 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 	Image3DType::RegionType region = image->GetLargestPossibleRegion();
 	size = region.GetSize();
 
-	// invert image, space becomes filled, volume becomes empty
-	// Issue: too much filling, bad if something outside the body moves and this thinks its inside
+	std::cout << "Finding max indecies" << std::endl;
+	int maxValue = std::numeric_limits<int>::max();
+	int minIndicies[3] = {maxValue, maxValue, maxValue};
+	int maxIndicies[3] = {0, 0, 0};
 	for(int i = 0; i < size[0]; i++)
 	{
 		for(int j = 0; j < size[1]; j++)
@@ -58,13 +65,115 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 				if(pixelValue > 0)
 				{
 					image->SetPixel(index, 0);
-				} else
-				{
-					image->SetPixel(index, 10000);
+					// find the bounding cube
+					for(int idx = 0; idx < 3; idx++)
+					{
+						if(index[idx] > maxIndicies[idx])
+						{
+							maxIndicies[idx] = index[idx];
+						}
+						if(index[idx] < minIndicies[idx])
+						{
+							minIndicies[idx] = index[idx];
+						}
+					}
 				}
 			}
 		}
 	}
+
+	std::cout << "Filling in binding cube" << std::endl;
+	int wall = 3;
+	for(int i = minIndicies[0] - wall; i <= minIndicies[0]; i++ )
+	{
+			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
+			{
+				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 10000);
+				}
+			}
+	}
+
+for(int i = maxIndicies[0]; i <= maxIndicies[0] + wall; i++ )
+	{
+			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
+			{
+				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 10000);
+				}
+			}
+	}
+
+for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
+	{
+			for(int j = minIndicies[1] - wall; j <= minIndicies[1]; j++)
+			{
+				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 10000);
+				}
+			}
+	}
+
+for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
+	{
+			for(int j = maxIndicies[1]; j <= maxIndicies[1] + wall; j++)
+			{
+				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 10000);
+				}
+			}
+	}
+
+for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
+	{
+			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
+			{
+				for(int k = minIndicies[2] - wall; k <= minIndicies[2]; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 10000);
+				}
+			}
+	}
+
+for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
+	{
+			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
+			{
+				for(int k = maxIndicies[2]; k <= maxIndicies[2] + wall; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 10000);
+				}
+			}
+	}
+
 	// make output directory
 	std::string writedir;
 		if(argc < 2)
