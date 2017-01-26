@@ -14,7 +14,6 @@
 #include <limits>
 
 // By Thursday:
-// Switch doubles to floats
 // Remove configurable cube from starting points
 // Testing
 CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
@@ -77,6 +76,9 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 							minIndicies[idx] = index[idx];
 						}
 					}
+				} else
+				{
+					image->SetPixel(index, 10000);
 				}
 			}
 		}
@@ -84,94 +86,25 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 
 	std::cout << "Filling in binding cube" << std::endl;
 	int wall = 3;
-	for(int i = minIndicies[0] - wall; i <= minIndicies[0]; i++ )
-	{
-			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
-			{
-				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
-				{
-					Image3DType::IndexType index;
-					index[0] = i;
-					index[1] = j;
-					index[2] = k;
-					image->SetPixel(index, 10000);
-				}
-			}
-	}
 
-for(int i = maxIndicies[0]; i <= maxIndicies[0] + wall; i++ )
+	for(int i = 0; i < size[0]; i++)
 	{
-			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
+		for(int j = 0; j < size[1]; j++)
+		{
+			for(int k = 0; k < size[2]; k++)
 			{
-				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
+				if(i > maxIndicies[0] + wall || i < minIndicies[0] - wall ||
+					 j > maxIndicies[1] + wall || j < minIndicies[1] - wall ||
+				 	 k > maxIndicies[2] + wall || k < minIndicies[2] - wall)
 				{
 					Image3DType::IndexType index;
 					index[0] = i;
 					index[1] = j;
 					index[2] = k;
-					image->SetPixel(index, 10000);
+					image->SetPixel(index, 0);
 				}
 			}
-	}
-
-for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
-	{
-			for(int j = minIndicies[1] - wall; j <= minIndicies[1]; j++)
-			{
-				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
-				{
-					Image3DType::IndexType index;
-					index[0] = i;
-					index[1] = j;
-					index[2] = k;
-					image->SetPixel(index, 10000);
-				}
-			}
-	}
-
-for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
-	{
-			for(int j = maxIndicies[1]; j <= maxIndicies[1] + wall; j++)
-			{
-				for(int k = minIndicies[2] - wall; k <= maxIndicies[2] + wall; k++)
-				{
-					Image3DType::IndexType index;
-					index[0] = i;
-					index[1] = j;
-					index[2] = k;
-					image->SetPixel(index, 10000);
-				}
-			}
-	}
-
-for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
-	{
-			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
-			{
-				for(int k = minIndicies[2] - wall; k <= minIndicies[2]; k++)
-				{
-					Image3DType::IndexType index;
-					index[0] = i;
-					index[1] = j;
-					index[2] = k;
-					image->SetPixel(index, 10000);
-				}
-			}
-	}
-
-for(int i = minIndicies[0] - wall; i <= maxIndicies[0] + wall; i++ )
-	{
-			for(int j = minIndicies[1] - wall; j <= maxIndicies[1] + wall; j++)
-			{
-				for(int k = maxIndicies[2]; k <= maxIndicies[2] + wall; k++)
-				{
-					Image3DType::IndexType index;
-					index[0] = i;
-					index[1] = j;
-					index[2] = k;
-					image->SetPixel(index, 10000);
-				}
-			}
+		}
 	}
 
 	// make output directory
