@@ -11,5 +11,6 @@
 int main(int argc, char** argv)
 {
   CrispCollisionDetector detector(argc, argv);
+  detector.visualize(argc, argv);
   return 0;
 }

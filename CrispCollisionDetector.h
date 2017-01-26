@@ -52,7 +52,7 @@ public:
 								 	 std::vector<Image3DType::IndexType*> & pixels) const;
 	void remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
 															const std::vector<Eigen::Vector3d> & point2s,
-															const std::vector<float> & radii);
+															const std::vector<float> & radii, int width);
 	CrispCollisionDetector(int argc, char** argv);
 
 	bool ptIsInCylinder(const Eigen::Vector3d &pt, Cylinder* cylinder) const;

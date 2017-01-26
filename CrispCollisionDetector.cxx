@@ -14,7 +14,6 @@
 #include <limits>
 
 // By Thursday:
-// Remove configurable cube from starting points
 // Testing
 CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 {
@@ -106,6 +105,11 @@ CrispCollisionDetector::CrispCollisionDetector(int argc, char** argv)
 			}
 		}
 	}
+
+}
+
+void CrispCollisionDetector::visualize(int argc, char** argv)
+{
 
 	// make output directory
 	std::string writedir;
@@ -308,14 +312,27 @@ bool CrispCollisionDetector::inCollision(const std::vector<Eigen::Vector3d> & po
 
 void CrispCollisionDetector::remove_starting_points(const std::vector<Eigen::Vector3d> & point1s,
 								 const std::vector<Eigen::Vector3d> & point2s,
-								 const std::vector<float> & radii)
+								 const std::vector<float> & radii, int width)
 {
 	std::vector<int> indices;
 	std::vector<Image3DType::IndexType*> pixels;
 	inCollision(point1s, point2s, radii, indices, pixels);
-	for(std::vector<Image3DType::IndexType*>::size_type i = 0; i != pixels.size(); i++)
+	for(std::vector<Image3DType::IndexType*>::size_type idx = 0; idx != pixels.size(); idx++)
 	{
-		image->SetPixel(*pixels[i], 0);
+		for(int i = (*pixels[idx])[0] - width; i < (*pixels[idx])[0] + width; i++)
+		{
+			for(int j = (*pixels[idx])[1] - width; j < (*pixels[idx])[1] + width; j++)
+			{
+				for(int k = (*pixels[idx])[2] - width; k < (*pixels[idx])[2] + width; k++)
+				{
+					Image3DType::IndexType index;
+					index[0] = i;
+					index[1] = j;
+					index[2] = k;
+					image->SetPixel(index, 0);
+				}
+			}
+		}
 	}
 	return;
 }
